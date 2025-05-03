@@ -33,6 +33,7 @@ class Vote(db.Model):
     paper_doi = db.Column(db.String(100), db.ForeignKey('paper.doi'), nullable=False)
     vote = db.Column(db.String(4), nullable=False)  # 'up' or 'down'
     timestamp = db.Column(db.DateTime, default=lambda: datetime.now(UTC))
+    used_for_prefs = db.Column(db.Boolean, default=False)
     
     def __repr__(self):
         return f'<Vote {self.paper_doi} {self.vote}>' 

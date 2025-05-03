@@ -3,7 +3,7 @@ from sendgrid.helpers.mail import Mail, Email, To, Content
 from datetime import datetime
 from .config import Config
 
-def build_digest_html(papers, summaries):
+def build_digest_html(papers, summaries, highlight_title=None, highlight_justification=None):
     """Build HTML content for the email digest."""
     html = f"""
     <html>
@@ -27,10 +27,15 @@ def build_digest_html(papers, summaries):
     """
     
     for paper in papers:
+        is_highlight = (paper.title.strip() == (highlight_title or "").strip())
         html += f"""
         <div class="paper">
-            <div class="title">{paper.title}</div>
+            <div class="title" {'style=\"color: red;\"' if is_highlight else ''}>
+                {paper.title}
+                {'<span style=\"background: gold; color: #b00; border-radius: 4px; padding: 2px 6px; margin-left: 8px; font-weight: bold; font-size: 0.9em;\">Highlighted</span>' if is_highlight else ''}
+            </div>
             <div class="journal">{paper.journal} (IF: {paper.impact_factor})</div>
+            {'<div class=\"highlight-justification\" style=\"font-style:italic; color:#b00;\">'+highlight_justification+'</div>' if is_highlight and highlight_justification else ''}
             <div class="summary">{paper.abstract}</div>
             <div class="feedback">
                 <a href="https://{Config.API_DOMAIN}/feedback?doi={paper.doi}&vote=up">👍</a>
@@ -45,12 +50,12 @@ def build_digest_html(papers, summaries):
     """
     return html
 
-def send_digest(papers, summaries):
+def send_digest(papers, summaries, highlight_title=None, highlight_justification=None):
     """Send the digest email using SendGrid."""
     if not Config.SENDGRID_API_KEY or not Config.EMAIL_FROM or not Config.EMAIL_RECIPIENTS:
         raise ValueError("Missing email configuration")
     
-    html_content = build_digest_html(papers, summaries)
+    html_content = build_digest_html(papers, summaries, highlight_title, highlight_justification)
     
     message = Mail(
         from_email=Email(Config.EMAIL_FROM),

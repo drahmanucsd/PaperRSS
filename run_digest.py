@@ -4,6 +4,8 @@ from app.rss import fetch_all_journals
 from app.summary import summarize_abstracts
 from app.emailer import send_digest
 from app.archiver import commit_digest
+from app.preferences import extract_user_preferences, get_user_preferences
+from app.highlight import select_highlighted_paper
 from datetime import datetime, timedelta, UTC
 import os
 
@@ -21,7 +23,7 @@ def run_digest():
             return
         
         # 2. Get papers from last 24 hours
-        cutoff = datetime.now(UTC) - timedelta(days=1)
+        cutoff = datetime.now(UTC) - timedelta(days=7)
         print(f"Filtering papers published after {cutoff}")
         recent_papers = []
         for paper in papers:
@@ -45,12 +47,18 @@ def run_digest():
         abstracts = [p.abstract for p in top_papers]
         summaries = summarize_abstracts(abstracts)
         
-        # 5. Send email
+        # 5. Update user preferences and select highlight
+        print("Updating user preferences...")
+        extract_user_preferences()
+        user_prefs = get_user_preferences()
+        highlight_title, highlight_justification = select_highlighted_paper(top_papers, user_prefs)
+        
+        # 6. Send email
         print("Sending email...")
-        email_sent = send_digest(top_papers, summaries)
+        email_sent = send_digest(top_papers, summaries, highlight_title=highlight_title, highlight_justification=highlight_justification)
         
         if email_sent:
-            # 6. Archive to GitHub
+            # 7. Archive to GitHub
             print("Archiving to GitHub...")
             html_content = f"""
             <html>
@@ -74,8 +82,12 @@ def run_digest():
                 <h2>Papers</h2>
                 {''.join(f'''
                 <div class="paper">
-                    <div class="title">{p.title}</div>
+                    <div class="title" {'style=\"color: red;\"' if p.title.strip() == (highlight_title or "").strip() else ''}>
+                        {p.title}
+                        {'<span style=\"background: gold; color: #b00; border-radius: 4px; padding: 2px 6px; margin-left: 8px; font-weight: bold; font-size: 0.9em;\">Highlighted</span>' if p.title.strip() == (highlight_title or "").strip() else ''}
+                    </div>
                     <div class="journal">{p.journal} (IF: {p.impact_factor})</div>
+                    {'<div class=\"highlight-justification\" style=\"font-style:italic; color:#b00;\">'+highlight_justification+'</div>' if p.title.strip() == (highlight_title or "").strip() and highlight_justification else ''}
                     <div class="summary">{p.abstract}</div>
                     <div class="feedback">
                         <a href="https://{os.getenv('API_DOMAIN')}/feedback?doi={p.doi}&vote=up">👍</a>
@@ -88,24 +100,21 @@ def run_digest():
             """
             commit_digest(html_content)
             
-            # 7. Create digest record
+            # 8. Create digest record
             current_date = datetime.now().date()
             
             # Delete existing digest for today if it exists
             existing_digest = Digest.query.filter_by(date=current_date).first()
             if existing_digest:
-                print(f"Deleting existing digest for {current_date}")
                 db.session.delete(existing_digest)
-                db.session.commit()
             
             # Create new digest
-            print(f"Creating new digest for {current_date}")
-            digest = Digest(date=current_date)
-            digest.papers = top_papers
-            db.session.add(digest)
+            new_digest = Digest(date=current_date)
+            for paper in top_papers:
+                new_digest.papers.append(paper)
+            db.session.add(new_digest)
             db.session.commit()
-            
-            print("Digest completed successfully!")
+            print("Digest record created successfully")
         else:
             print("Failed to send email")
 
