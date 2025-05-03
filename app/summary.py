@@ -65,4 +65,4 @@ def summarize_abstracts(abstracts, max_papers=5):
         print(f"Unexpected error in summarization: {str(e)}")
         print(f"Error type: {type(e)}")
         print(f"Error details: {str(e)}")
-        return "Error generating summaries. Please try again later." 
+        return "Error generating summaries. Please try again later."

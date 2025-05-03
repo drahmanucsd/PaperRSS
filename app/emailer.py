@@ -16,13 +16,13 @@ def build_digest_html(papers, summaries):
             .summary {{ margin: 10px 0; }}
             .feedback {{ margin-top: 10px; }}
             .feedback a {{ margin-right: 10px; text-decoration: none; }}
-            .paper-summary h3 {{ margin: 0 0 10px 0; }}
-            .paper-summary p {{ margin: 0; }}
         </style>
     </head>
     <body>
         <h1>Nature Digest - {datetime.now().strftime('%Y-%m-%d')}</h1>
-        {summaries}
+        <div class="summaries">
+            {summaries}
+        </div>
         <h2>Papers</h2>
     """
     
@@ -31,6 +31,7 @@ def build_digest_html(papers, summaries):
         <div class="paper">
             <div class="title">{paper.title}</div>
             <div class="journal">{paper.journal} (IF: {paper.impact_factor})</div>
+            <div class="summary">{paper.abstract}</div>
             <div class="feedback">
                 <a href="https://{Config.API_DOMAIN}/feedback?doi={paper.doi}&vote=up">👍</a>
                 <a href="https://{Config.API_DOMAIN}/feedback?doi={paper.doi}&vote=down">👎</a>
@@ -64,4 +65,4 @@ def send_digest(papers, summaries):
         return response.status_code == 202
     except Exception as e:
         print(f"Error sending email: {str(e)}")
-        return False 
+        return False
