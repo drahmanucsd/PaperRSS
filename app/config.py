@@ -8,30 +8,33 @@ class Config:
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///app.db'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
+    # API domain for feedback links
+    API_DOMAIN = os.environ.get('API_DOMAIN', 'localhost:5000')
+    
     # Journal RSS feeds
     JOURNALS = {
         'Nature Reviews Drug Discovery': {
-            'rss_url': 'https://www.nature.com/nrd/current_issue/rss',
+            'rss_url': 'https://www.nature.com/nrd.rss',
             'impact_factor': 122.7
         },
         'Nature Reviews Cancer': {
-            'rss_url': 'https://www.nature.com/nrc/current_issue/rss',
+            'rss_url': 'https://www.nature.com/nrc.rss',
             'impact_factor': 72.5
         },
         'Nature Biomedical Engineering': {
-            'rss_url': 'https://www.nature.com/natbiomedeng/current-issue/rss',
+            'rss_url': 'https://www.nature.com/natbiomedeng.rss',
             'impact_factor': 27.7
         },
         'Nature Biotechnology': {
-            'rss_url': 'https://www.nature.com/nbt/current_issue/rss',
+            'rss_url': 'https://www.nature.com/nbt.rss',
             'impact_factor': 33.1
         },
         'Nature Genetics': {
-            'rss_url': 'https://www.nature.com/ng/current_issue/rss',
+            'rss_url': 'https://www.nature.com/ng.rss',
             'impact_factor': 31.8
         },
         'Nature': {
-            'rss_url': 'https://www.nature.com/nature/rss',
+            'rss_url': 'https://www.nature.com/nature.rss',
             'impact_factor': 50.5
         }
     }

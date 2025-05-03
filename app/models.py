@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 from . import db
 
 class Paper(db.Model):
@@ -9,7 +9,7 @@ class Paper(db.Model):
     link = db.Column(db.String(500), nullable=False)
     abstract = db.Column(db.Text)
     impact_factor = db.Column(db.Float)
-    pub_date = db.Column(db.DateTime, default=datetime.utcnow)
+    pub_date = db.Column(db.DateTime, default=lambda: datetime.now(UTC))
     
     def __repr__(self):
         return f'<Paper {self.doi}>'
@@ -32,7 +32,7 @@ class Vote(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     paper_doi = db.Column(db.String(100), db.ForeignKey('paper.doi'), nullable=False)
     vote = db.Column(db.String(4), nullable=False)  # 'up' or 'down'
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    timestamp = db.Column(db.DateTime, default=lambda: datetime.now(UTC))
     
     def __repr__(self):
         return f'<Vote {self.paper_doi} {self.vote}>' 

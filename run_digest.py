@@ -1,10 +1,10 @@
 from app import create_app, db
-from app.models import Paper, Digest
+from app.models import Paper, Digest, Vote
 from app.rss import fetch_all_journals
 from app.summary import summarize_abstracts
 from app.emailer import send_digest
 from app.archiver import commit_digest
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 import os
 
 def run_digest():
@@ -17,12 +17,20 @@ def run_digest():
         papers = fetch_all_journals()
         
         if not papers:
-            print("No new papers found")
+            print("No papers found")
             return
         
         # 2. Get papers from last 24 hours
-        cutoff = datetime.utcnow() - timedelta(days=10)
-        recent_papers = [p for p in papers if p.pub_date >= cutoff]
+        cutoff = datetime.now(UTC) - timedelta(days=1)
+        print(f"Filtering papers published after {cutoff}")
+        recent_papers = []
+        for paper in papers:
+            pub_date = paper.pub_date
+            if pub_date.tzinfo is None:
+                pub_date = pub_date.replace(tzinfo=UTC)
+            if pub_date >= cutoff:
+                recent_papers.append(paper)
+                print(f"Including paper: {paper.title} (published {pub_date})")
         
         if not recent_papers:
             print("No papers from last 24 hours")
@@ -81,7 +89,18 @@ def run_digest():
             commit_digest(html_content)
             
             # 7. Create digest record
-            digest = Digest(date=datetime.now().date())
+            current_date = datetime.now().date()
+            
+            # Delete existing digest for today if it exists
+            existing_digest = Digest.query.filter_by(date=current_date).first()
+            if existing_digest:
+                print(f"Deleting existing digest for {current_date}")
+                db.session.delete(existing_digest)
+                db.session.commit()
+            
+            # Create new digest
+            print(f"Creating new digest for {current_date}")
+            digest = Digest(date=current_date)
             digest.papers = top_papers
             db.session.add(digest)
             db.session.commit()
