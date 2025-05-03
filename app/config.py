@@ -9,7 +9,7 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # API domain for feedback links
-    API_DOMAIN = os.environ.get('API_DOMAIN', 'localhost:5000')
+    API_DOMAIN = os.environ.get('API_DOMAIN', '127.0.0.1:5001')
     
     # Journal RSS feeds
     JOURNALS = {

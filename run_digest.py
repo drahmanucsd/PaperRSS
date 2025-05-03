@@ -23,7 +23,7 @@ def run_digest():
             return
         
         # 2. Get papers from last 24 hours
-        cutoff = datetime.now(UTC) - timedelta(days=7)
+        cutoff = datetime.now(UTC) - timedelta(days=100)
         print(f"Filtering papers published after {cutoff}")
         recent_papers = []
         for paper in papers:
@@ -38,9 +38,26 @@ def run_digest():
             print("No papers from last 24 hours")
             return
         
-        # 3. Sort by impact factor
-        sorted_papers = sorted(recent_papers, key=lambda x: x.impact_factor, reverse=True)
-        top_papers = sorted_papers[:5]  # Get top 5 papers
+        # 3. Group papers by journal and select top papers from each
+        papers_by_journal = {}
+        for paper in recent_papers:
+            if paper.journal not in papers_by_journal:
+                papers_by_journal[paper.journal] = []
+            papers_by_journal[paper.journal].append(paper)
+        
+        # Sort papers within each journal by impact factor
+        for journal in papers_by_journal:
+            papers_by_journal[journal].sort(key=lambda x: x.impact_factor, reverse=True)
+        
+        # Select top papers from each journal
+        top_papers = []
+        max_papers_per_journal = 2  # Maximum number of papers to select from each journal
+        for journal in papers_by_journal:
+            top_papers.extend(papers_by_journal[journal][:max_papers_per_journal])
+        
+        # Sort all selected papers by impact factor
+        top_papers.sort(key=lambda x: x.impact_factor, reverse=True)
+        top_papers = top_papers[:5]  # Get final top 5 papers
         
         # 4. Generate summaries
         print("Generating summaries...")
@@ -83,7 +100,7 @@ def run_digest():
                 {''.join(f'''
                 <div class="paper">
                     <div class="title" {'style=\"color: red;\"' if p.title.strip() == (highlight_title or "").strip() else ''}>
-                        {p.title}
+                        <a href="https://doi.org/10.1038/{p.doi}" style="text-decoration: none; color: inherit;">{p.title}</a>
                         {'<span style=\"background: gold; color: #b00; border-radius: 4px; padding: 2px 6px; margin-left: 8px; font-weight: bold; font-size: 0.9em;\">Highlighted</span>' if p.title.strip() == (highlight_title or "").strip() else ''}
                     </div>
                     <div class="journal">{p.journal} (IF: {p.impact_factor})</div>
@@ -107,6 +124,7 @@ def run_digest():
             existing_digest = Digest.query.filter_by(date=current_date).first()
             if existing_digest:
                 db.session.delete(existing_digest)
+                db.session.commit()  # Commit the deletion first
             
             # Create new digest
             new_digest = Digest(date=current_date)

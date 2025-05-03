@@ -24,18 +24,32 @@ def extract_doi_from_content(content):
 def fetch_rss(journal_name, rss_url):
     """Fetch and parse RSS feed for a given journal."""
     print(f"Fetching {journal_name} from {rss_url}")
-    feed = feedparser.parse(rss_url)
     
-    if hasattr(feed, 'status'):
-        print(f"Feed status: {feed.status}")
-    if hasattr(feed, 'bozo'):
-        print(f"Feed parsing error: {feed.bozo_exception if feed.bozo else 'None'}")
+    # Try different RSS feed URLs to get a wider range of papers
+    feed_urls = [
+        rss_url,  # Original URL
+        rss_url.replace('/rss', '/current_issue/rss'),  # Current issue
+        rss_url.replace('/rss', '/journal/vaop/ncurrent/rss.rdf'),  # Articles in press
+    ]
     
-    print(f"Found {len(feed.entries)} entries")
+    all_entries = []
+    for url in feed_urls:
+        try:
+            feed = feedparser.parse(url)
+            if hasattr(feed, 'status'):
+                print(f"Feed status for {url}: {feed.status}")
+            if hasattr(feed, 'bozo'):
+                print(f"Feed parsing error for {url}: {feed.bozo_exception if feed.bozo else 'None'}")
+            
+            print(f"Found {len(feed.entries)} entries from {url}")
+            all_entries.extend(feed.entries)
+        except Exception as e:
+            print(f"Error fetching {url}: {str(e)}")
+            continue
     
     papers = []
     
-    for entry in feed.entries:
+    for entry in all_entries:
         print(f"\nProcessing entry: {entry.title if hasattr(entry, 'title') else 'Unknown title'}")
         
         # Extract DOI from various possible fields
