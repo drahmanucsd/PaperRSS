@@ -2,30 +2,33 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Union, Mapping, cast
+from typing import List, Union, Mapping, cast
 from typing_extensions import Literal
 
 import httpx
 
+from ... import _legacy_response
 from ..._types import NOT_GIVEN, Body, Query, Headers, NotGiven, FileTypes
 from ..._utils import extract_files, maybe_transform, deepcopy_minimal
+from ..._compat import cached_property
 from ..._resource import SyncAPIResource, AsyncAPIResource
-from ..._response import to_raw_response_wrapper, async_to_raw_response_wrapper
+from ..._response import to_streamed_response_wrapper, async_to_streamed_response_wrapper
 from ...types.audio import Transcription, transcription_create_params
-from ..._base_client import make_request_options
-
-if TYPE_CHECKING:
-    from ..._client import OpenAI, AsyncOpenAI
+from ..._base_client import (
+    make_request_options,
+)
 
 __all__ = ["Transcriptions", "AsyncTranscriptions"]
 
 
 class Transcriptions(SyncAPIResource):
-    with_raw_response: TranscriptionsWithRawResponse
+    @cached_property
+    def with_raw_response(self) -> TranscriptionsWithRawResponse:
+        return TranscriptionsWithRawResponse(self)
 
-    def __init__(self, client: OpenAI) -> None:
-        super().__init__(client)
-        self.with_raw_response = TranscriptionsWithRawResponse(self)
+    @cached_property
+    def with_streaming_response(self) -> TranscriptionsWithStreamingResponse:
+        return TranscriptionsWithStreamingResponse(self)
 
     def create(
         self,
@@ -36,6 +39,7 @@ class Transcriptions(SyncAPIResource):
         prompt: str | NotGiven = NOT_GIVEN,
         response_format: Literal["json", "text", "srt", "verbose_json", "vtt"] | NotGiven = NOT_GIVEN,
         temperature: float | NotGiven = NOT_GIVEN,
+        timestamp_granularities: List[Literal["word", "segment"]] | NotGiven = NOT_GIVEN,
         # Use the following arguments if you need to pass additional parameters to the API that aren't available via kwargs.
         # The extra values given here take precedence over values defined on the client or passed to this method.
         extra_headers: Headers | None = None,
@@ -71,6 +75,10 @@ class Transcriptions(SyncAPIResource):
               [log probability](https://en.wikipedia.org/wiki/Log_probability) to
               automatically increase the temperature until certain thresholds are hit.
 
+          timestamp_granularities: The timestamp granularities to populate for this transcription. Any of these
+              options: `word`, or `segment`. Note: There is no additional latency for segment
+              timestamps, but generating word timestamps incurs additional latency.
+
           extra_headers: Send extra headers
 
           extra_query: Add additional query parameters to the request
@@ -87,6 +95,7 @@ class Transcriptions(SyncAPIResource):
                 "prompt": prompt,
                 "response_format": response_format,
                 "temperature": temperature,
+                "timestamp_granularities": timestamp_granularities,
             }
         )
         files = extract_files(cast(Mapping[str, object], body), paths=[["file"]])
@@ -95,7 +104,6 @@ class Transcriptions(SyncAPIResource):
             # sent to the server will contain a `boundary` parameter, e.g.
             # multipart/form-data; boundary=---abc--
             extra_headers = {"Content-Type": "multipart/form-data", **(extra_headers or {})}
-
         return self._post(
             "/audio/transcriptions",
             body=maybe_transform(body, transcription_create_params.TranscriptionCreateParams),
@@ -108,11 +116,13 @@ class Transcriptions(SyncAPIResource):
 
 
 class AsyncTranscriptions(AsyncAPIResource):
-    with_raw_response: AsyncTranscriptionsWithRawResponse
+    @cached_property
+    def with_raw_response(self) -> AsyncTranscriptionsWithRawResponse:
+        return AsyncTranscriptionsWithRawResponse(self)
 
-    def __init__(self, client: AsyncOpenAI) -> None:
-        super().__init__(client)
-        self.with_raw_response = AsyncTranscriptionsWithRawResponse(self)
+    @cached_property
+    def with_streaming_response(self) -> AsyncTranscriptionsWithStreamingResponse:
+        return AsyncTranscriptionsWithStreamingResponse(self)
 
     async def create(
         self,
@@ -123,6 +133,7 @@ class AsyncTranscriptions(AsyncAPIResource):
         prompt: str | NotGiven = NOT_GIVEN,
         response_format: Literal["json", "text", "srt", "verbose_json", "vtt"] | NotGiven = NOT_GIVEN,
         temperature: float | NotGiven = NOT_GIVEN,
+        timestamp_granularities: List[Literal["word", "segment"]] | NotGiven = NOT_GIVEN,
         # Use the following arguments if you need to pass additional parameters to the API that aren't available via kwargs.
         # The extra values given here take precedence over values defined on the client or passed to this method.
         extra_headers: Headers | None = None,
@@ -158,6 +169,10 @@ class AsyncTranscriptions(AsyncAPIResource):
               [log probability](https://en.wikipedia.org/wiki/Log_probability) to
               automatically increase the temperature until certain thresholds are hit.
 
+          timestamp_granularities: The timestamp granularities to populate for this transcription. Any of these
+              options: `word`, or `segment`. Note: There is no additional latency for segment
+              timestamps, but generating word timestamps incurs additional latency.
+
           extra_headers: Send extra headers
 
           extra_query: Add additional query parameters to the request
@@ -174,6 +189,7 @@ class AsyncTranscriptions(AsyncAPIResource):
                 "prompt": prompt,
                 "response_format": response_format,
                 "temperature": temperature,
+                "timestamp_granularities": timestamp_granularities,
             }
         )
         files = extract_files(cast(Mapping[str, object], body), paths=[["file"]])
@@ -182,7 +198,6 @@ class AsyncTranscriptions(AsyncAPIResource):
             # sent to the server will contain a `boundary` parameter, e.g.
             # multipart/form-data; boundary=---abc--
             extra_headers = {"Content-Type": "multipart/form-data", **(extra_headers or {})}
-
         return await self._post(
             "/audio/transcriptions",
             body=maybe_transform(body, transcription_create_params.TranscriptionCreateParams),
@@ -196,13 +211,35 @@ class AsyncTranscriptions(AsyncAPIResource):
 
 class TranscriptionsWithRawResponse:
     def __init__(self, transcriptions: Transcriptions) -> None:
-        self.create = to_raw_response_wrapper(
+        self._transcriptions = transcriptions
+
+        self.create = _legacy_response.to_raw_response_wrapper(
             transcriptions.create,
         )
 
 
 class AsyncTranscriptionsWithRawResponse:
     def __init__(self, transcriptions: AsyncTranscriptions) -> None:
-        self.create = async_to_raw_response_wrapper(
+        self._transcriptions = transcriptions
+
+        self.create = _legacy_response.async_to_raw_response_wrapper(
+            transcriptions.create,
+        )
+
+
+class TranscriptionsWithStreamingResponse:
+    def __init__(self, transcriptions: Transcriptions) -> None:
+        self._transcriptions = transcriptions
+
+        self.create = to_streamed_response_wrapper(
+            transcriptions.create,
+        )
+
+
+class AsyncTranscriptionsWithStreamingResponse:
+    def __init__(self, transcriptions: AsyncTranscriptions) -> None:
+        self._transcriptions = transcriptions
+
+        self.create = async_to_streamed_response_wrapper(
             transcriptions.create,
         )

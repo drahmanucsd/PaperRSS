@@ -1,0 +1,27 @@
+# Research Interests and Preferences
+# Format: topic [weight 1-10]
+# Higher weights indicate stronger interest
+
+# Drug Development & Therapeutics
+drug discovery 9
+cancer immunotherapy 8
+targeted therapy 7
+drug delivery systems 8
+
+# Genetics & Molecular Biology
+gene editing 9
+synthetic biology 8
+genetic engineering 7
+molecular diagnostics 6
+
+# Biomedical Engineering
+biomaterials 7
+tissue engineering 8
+medical devices 6
+biomedical imaging 7
+
+# Biotechnology
+protein engineering 8
+cell therapy 9
+bioprocessing 6
+biomanufacturing 7 

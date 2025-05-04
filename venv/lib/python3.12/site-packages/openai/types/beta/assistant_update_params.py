@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import List, Union, Optional
+from typing import List, Union, Iterable, Optional
 from typing_extensions import Literal, Required, TypedDict
 
 from ...types import shared_params
@@ -25,7 +25,7 @@ class AssistantUpdateParams(TypedDict, total=False):
     A list of [File](https://platform.openai.com/docs/api-reference/files) IDs
     attached to this assistant. There can be a maximum of 20 files attached to the
     assistant. Files are ordered by their creation date in ascending order. If a
-    file was previosuly attached to the list but does not show up in the list, it
+    file was previously attached to the list but does not show up in the list, it
     will be deleted from the assistant.
     """
 
@@ -56,7 +56,7 @@ class AssistantUpdateParams(TypedDict, total=False):
     name: Optional[str]
     """The name of the assistant. The maximum length is 256 characters."""
 
-    tools: List[Tool]
+    tools: Iterable[Tool]
     """A list of tool enabled on the assistant.
 
     There can be a maximum of 128 tools per assistant. Tools can be of types

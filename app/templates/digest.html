@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ date }} Nature Digest</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        .paper {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        .paper h2 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        .paper a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .paper a:hover {
+            text-decoration: underline;
+        }
+        .doi {
+            color: #666;
+            font-size: 0.9em;
+        }
+        .summary {
+            margin-top: 10px;
+            color: #444;
+        }
+        .journal {
+            color: #666;
+            font-style: italic;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>{{ date }} Nature Digest</h1>
+    {% for paper in papers %}
+    <div class="paper">
+        <h2><a href="{{ paper.link }}">{{ paper.title }}</a></h2>
+        <div class="journal">{{ paper.journal }}</div>
+        <div class="doi">DOI: {{ paper.doi }}</div>
+        <div class="summary">{{ paper.summary }}</div>
+    </div>
+    {% endfor %}
+</body>
+</html>
