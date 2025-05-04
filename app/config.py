@@ -11,7 +11,11 @@ class Config:
         "Nature Biomedical Engineering": "https://www.nature.com/natbiomedeng/current_issue/rss",
         "Nature Biotechnology": "https://www.nature.com/nbt/current_issue/rss",
         "Nature Genetics": "https://www.nature.com/ng/current_issue/rss",
-        "Nature": "https://www.nature.com/nature/current_issue/rss"
+        "Nature": "https://www.nature.com/nature/current_issue/rss",
+        "Nature Medicine": "https://www.nature.com/nm/current_issue/rss",
+        "Nature Neuroscience": "https://www.nature.com/neuro/current_issue/rss",
+        "Nature Nanotechnology": "https://www.nature.com/nnano/current_issue/rss",
+        "Nature Cell Biology": "https://www.nature.com/ncb/current_issue/rss"
     }
     
     # File paths

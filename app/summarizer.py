@@ -16,44 +16,46 @@ def summarize_papers(papers: List[Paper]) -> List[Paper]:
         logger.warning("No papers to summarize")
         return papers
 
-    try:
-        # Initialize OpenAI client
-        client = OpenAI(api_key=Config.OPENAI_API_KEY)
+    # Initialize OpenAI client
+    client = OpenAI(api_key=Config.OPENAI_API_KEY)
 
-        # Prepare prompts for all papers
-        prompts = []
-        for paper in papers:
-            prompt = (
-                f"Title: {paper.title}\n"
-                f"Abstract: {paper.abstract}\n\n"
-                "Please provide a concise two-sentence summary focusing on the key findings and novelty. "
-                "First sentence should describe the main discovery, second should highlight its significance."
-            )
-            prompts.append(prompt)
-
-        # Call OpenAI API
-        logger.info(f"Generating summaries for {len(papers)} papers")
-        response = client.chat.completions.create(
-            model=Config.OPENAI_MODEL,
-            messages=[
-                {"role": "system", "content": "You are a scientific paper summarizer. Provide clear, concise summaries."},
-                *[{"role": "user", "content": prompt} for prompt in prompts]
-            ]
-        )
-
-        # Extract summaries from response
-        summaries = [choice.message.content.strip() for choice in response.choices]
+    # Process papers in batches to avoid token limits
+    batch_size = 5
+    for i in range(0, len(papers), batch_size):
+        batch = papers[i:i + batch_size]
         
-        # Add summaries to papers
-        for paper, summary in zip(papers, summaries):
-            paper.summary = summary
-            logger.info(f"Added summary for: {paper.title}")
+        try:
+            # Call OpenAI API for each paper in the batch
+            for paper in batch:
+                messages = [
+                    {"role": "system", "content": "You are a scientific paper summarizer. Provide clear, concise summaries."},
+                    {
+                        "role": "user", 
+                        "content": (
+                            f"Title: {paper.title}\n"
+                            f"Abstract: {paper.abstract}\n\n"
+                            "Please provide a concise two-sentence summary focusing on the key findings and novelty. "
+                            "First sentence should describe the main discovery, second should highlight its significance."
+                        )
+                    }
+                ]
 
-    except Exception as e:
-        logger.error(f"Error generating summaries: {str(e)}")
-        # Continue with unsummarized papers rather than failing completely
-        for paper in papers:
-            if not paper.summary:
-                paper.summary = "Summary generation failed."
+                # Call OpenAI API
+                logger.info(f"Generating summary for: {paper.title}")
+                response = client.chat.completions.create(
+                    model=Config.OPENAI_MODEL,
+                    messages=messages
+                )
+
+                # Extract summary from response
+                paper.summary = response.choices[0].message.content.strip()
+                logger.info(f"Added summary for: {paper.title}")
+
+        except Exception as e:
+            logger.error(f"Error generating summaries for batch: {str(e)}")
+            # Mark all remaining papers in this batch as failed
+            for p in batch:
+                if not p.summary:
+                    p.summary = "Summary generation failed."
 
     return papers 

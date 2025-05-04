@@ -10,7 +10,7 @@ drug delivery systems 8
 
 # Genetics & Molecular Biology
 gene editing 9
-synthetic biology 8
+synthetic biology 9
 genetic engineering 7
 molecular diagnostics 6
 
@@ -21,7 +21,8 @@ medical devices 6
 biomedical imaging 7
 
 # Biotechnology
-protein engineering 8
+protein engineering 9
 cell therapy 9
 bioprocessing 6
 biomanufacturing 7 
+antibiotic resistance 9
