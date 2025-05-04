@@ -1,201 +1,91 @@
-Thought for a couple of seconds
+# PaperRSS
 
+PaperRSS is a Flask-based web application that creates daily digests of scientific papers from Nature journals. It fetches articles via RSS feeds, generates summaries using OpenAI, and publishes them as HTML pages.
 
-Here’s a lean, end‑to‑end design for your “daily digest” MVP with Flask + GitHub Pages + OpenAI:
+## Features
 
----
+- Daily fetching of articles from Nature journals via RSS
+- Automatic generation of 2-sentence summaries using OpenAI
+- Paper ranking based on user preferences
+- HTML digest generation with clean, readable formatting
+- GitHub Pages integration for publishing digests
 
-## 1. Goals & Scope
+## Installation
 
-1. **Daily fetch** of today’s articles from your selected Nature journals via RSS.
-2. **Flask app** generates a single HTML page listing:
-
-   * Article **title** (linked to its DOI)
-   * Auto‑generated **2‑sentence summary** via OpenAI
-3. **Re‑rank** the list by a second OpenAI call that takes a plain‑text “preferences” file and returns a reordered list of DOIs.
-4. **Publish** the resulting HTML to GitHub Pages under `/digests/YYYY-MM-DD.html`.
-
-All else (feedback buttons, vote tracking, email, IF‑filtering) is out of MVP scope.
-
----
-
-## 2. High‑Level Architecture
-
-```text
-┌──────────────┐       ┌───────────────┐       ┌───────────────┐       ┌─────────────┐
-│  RSS Feeds   │─fetch─▶│ Flask App     │─calls─▶│ OpenAI ①      │─summaries─▶│ HTML Builder│
-└──────────────┘       └───────────────┘       └───────────────┘       └─────────────┘
-                                                   │                               │
-                                                   │                               ▼
-                                                   │                          ┌───────────────┐
-                                                   │ rankings via OpenAI ②     │ GitHub Commit │
-                                                   └──────────────────────────▶│ (Pages)       │
-                                                                               └───────────────┘
+1. Clone the repository:
+```bash
+git clone https://github.com/yourusername/PaperRSS.git
+cd PaperRSS
 ```
 
----
-
-## 3. Directory Layout
-
-```
-digest‑mvp/
-├─ app/
-│  ├─ __init__.py          # create_app()
-│  ├─ config.py            # RSS URLs + prefs file path + GitHub info
-│  ├─ fetcher.py           # fetch_today_articles() → List[Paper]
-│  ├─ summarizer.py        # summarize_papers(papers) → adds .summary
-│  ├─ ranker.py            # rank_papers(papers) → reordered list
-│  ├─ renderer.py          # render_digest(date, papers) → HTML str
-│  └─ github_uploader.py   # push_to_github(path, content)
-├─ preferences.txt         # user’s text description of interests
-├─ run.py                  # orchestration script (can also be Flask CLI)
-├─ requirements.txt        # Flask, feedparser, openai, PyGithub, Jinja2
-└─ .github/workflows/ci.yml # optional: GitHub Actions for daily run
+2. Create and activate a virtual environment:
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
 
----
-
-## 4. Core Components
-
-### 4.1 `config.py`
-
-```python
-RSS_FEEDS = {
-  "Nature Reviews Drug Discovery": "https://www.nature.com/nrd/current_issue/rss",
-  …  
-}
-PREFERENCES_FILE = "preferences.txt"
-GITHUB_REPO = "username/repo"       # your Pages repo
-GITHUB_BRANCH = "main"
-DIGEST_PATH_FMT = "digests/{date}.html"
-OPENAI_MODEL = "gpt-4.1-mini"
+3. Install dependencies:
+```bash
+pip install -r requirements.txt
 ```
 
-### 4.2 `fetcher.py`
-
-* **Function:** `fetch_today_articles()`
-* **Logic:**
-
-  1. Pull each feed with `feedparser`.
-  2. Filter entries where `published` == today’s date.
-  3. Build `Paper` objects: `{ doi, title, link, abstract }`.
-
-### 4.3 `summarizer.py`
-
-* **Function:** `summarize_papers(papers: List[Paper])`
-* **Implementation:**
-
-  ```python
-  prompts = [
-    f"Abstract: {p.abstract}\n\nPlease summarize in two sentences focusing on its key novelty."
-    for p in papers
-  ]
-  # You can batch multiple prompts in one chat completion if under token limit.
-  responses = openai.ChatCompletion.create(
-    model=OPENAI_MODEL,
-    messages=[{"role":"system","content":"You are a concise science summarizer."}]
-             + [{"role":"user","content":pr} for pr in prompts]
-  )
-  # Map responses back to papers[i].summary
-  ```
-
-### 4.4 `ranker.py`
-
-* **Function:** `rank_papers(papers: List[Paper]) -> List[Paper]`
-* **Implementation:**
-
-  ```python
-  prefs = open("preferences.txt").read()
-  doi_list = [p.doi for p in papers]
-  prompt = (
-    "Here is a user’s preferences:\n"
-    f"{prefs}\n\n"
-    "Please order the following DOIs by how well they match these preferences, best first:\n"
-    + "\n".join(doi_list)
-  )
-  resp = openai.ChatCompletion.create(
-    model=OPENAI_MODEL,
-    messages=[{"role":"user","content":prompt}]
-  )
-  ordered = parse_list_from_text(resp.choices[0].message.content)
-  # Return [paper for doi in ordered for paper in papers if paper.doi==doi]
-  ```
-
-### 4.5 `renderer.py`
-
-* **Function:** `render_digest(date: str, papers: List[Paper]) -> str`
-* **Implementation:** Jinja2 template:
-
-  ```html
-  <!DOCTYPE html><html><head><meta charset="utf-8"><title>{{date}} Digest</title></head>
-  <body>
-    <h1>{{date}} Nature Digest</h1>
-    {% for p in papers %}
-      <div class="paper">
-        <h2><a href="{{p.link}}">{{p.title}}</a></h2>
-        <p><em>DOI: {{p.doi}}</em></p>
-        <p>{{p.summary}}</p>
-      </div>
-      <hr/>
-    {% endfor %}
-  </body></html>
-  ```
-
-### 4.6 `github_uploader.py`
-
-* **Function:** `push_to_github(path: str, content: str)`
-* **Implementation:** PyGithub:
-
-  ```python
-  from github import Github
-  gh = Github(os.getenv("GITHUB_TOKEN"))
-  repo = gh.get_repo(config.GITHUB_REPO)
-  repo.create_file(
-    path, f"Add digest {date}", content, branch=config.GITHUB_BRANCH
-  )
-  ```
-
----
-
-## 5. Orchestration (`run.py`)
-
-```python
-from app.fetcher import fetch_today_articles
-from app.summarizer import summarize_papers
-from app.ranker import rank_papers
-from app.renderer import render_digest
-from app.github_uploader import push_to_github
-from datetime import date
-
-def main():
-    today = date.today().isoformat()
-    papers = fetch_today_articles()
-    summarize_papers(papers)
-    papers = rank_papers(papers)
-    html = render_digest(today, papers)
-    path = config.DIGEST_PATH_FMT.format(date=today)
-    push_to_github(path, html)
-
-if __name__=="__main__":
-    main()
+4. Set up environment variables:
+Create a `.env` file in the project root with:
+```
+OPENAI_API_KEY=your_openai_api_key
+GITHUB_TOKEN=your_github_token
 ```
 
----
+## Usage
 
-## 6. Scheduling
+1. Configure your preferences in `preferences.txt` with your research interests.
 
-* **GitHub Actions**: add a workflow to run `python run.py` at `0 14 * * *` (07:00 PST).
-* **Alternative**: a cheap VPS + cron, or PythonAnywhere’s free scheduled task.
+2. Run the application:
+```bash
+python run.py
+```
 
----
+The script will:
+- Fetch today's articles from configured Nature journals
+- Generate summaries using OpenAI
+- Rank articles based on your preferences
+- Generate an HTML digest
+- Publish to GitHub Pages
 
-## 7. Next Steps
+## Project Structure
 
-1. **Bootstrap** the repo with this structure + empty modules.
-2. **Implement & test** `fetcher.py` → confirm today’s articles.
-3. **Wire up** `summarizer.py` with dummy abstracts.
-4. **Draft** `preferences.txt` with your top‑of‑mind fields (“synthetic biology, drug delivery, …”).
-5. **Build** `ranker.py` and verify it reorders a sample DOI list.
-6. **Hook up** `renderer.py` and manually push one digest to GitHub Pages.
+```
+PaperRSS/
+├── app/                    # Application package
+│   ├── __init__.py        # Flask app initialization
+│   ├── config.py          # Configuration settings
+│   ├── fetcher.py         # RSS feed fetching
+│   ├── summarizer.py      # OpenAI summarization
+│   ├── ranker.py          # Article ranking
+│   ├── renderer.py        # HTML generation
+│   └── github_uploader.py # GitHub Pages integration
+├── digests/               # Generated digest files
+├── tests/                 # Test suite
+├── preferences.txt        # User preferences
+├── requirements.txt       # Project dependencies
+└── run.py                # Main execution script
+```
 
-Once each piece works end‑to‑end, you’ll have a working MVP you can iterate on (adding IF‑filtering, email delivery, feedback, etc.). Let me know where you’d like to dive in first!
+## Development
+
+Run tests:
+```bash
+pytest
+```
+
+## License
+
+MIT License
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
