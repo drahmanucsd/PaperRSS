@@ -1,0 +1,22 @@
+theme: jekyll-theme-primer
+title: PaperRSS
+description: RSS feed for academic papers
+baseurl: ""
+url: ""
+
+# Build settings
+markdown: kramdown
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+  - jekyll-github-metadata
+
+# Exclude files from processing
+exclude:
+  - venv/
+  - __pycache__/
+  - .pytest_cache/
+  - tests/
+  - requirements.txt
+  - run.py
+  - test_rss.py 
