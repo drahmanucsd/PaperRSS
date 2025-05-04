@@ -1,10 +1,11 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PaperRSS - Scientific Journal Digests</title>
-    <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>PaperRSS - Scientific Journal Digests</title>
+<style>
         :root {
             --primary-color: #2c3e50;
             --secondary-color: #3498db;
@@ -93,100 +94,64 @@
     </style>
 </head>
 <body>
-    <header>
-        <div class="container">
-            <h1>PaperRSS</h1>
-            <p class="subtitle">Stay updated with the latest scientific research</p>
-        </div>
-    </header>
-    
-    <main class="container">
-        <section>
-            <h2>Tracked Journals</h2>
-            <div class="journals-grid">
-                <div class="journal-card">
-                    <h3>Nature Family</h3>
-                    <ul>
-                        <li>Nature Reviews Drug Discovery</li>
-                        <li>Nature Reviews Cancer</li>
-                        <li>Nature Biomedical Engineering</li>
-                        <li>Nature Biotechnology</li>
-                        <li>Nature Genetics</li>
-                        <li>Nature</li>
-                        <li>Nature Medicine</li>
-                        <li>Nature Neuroscience</li>
-                        <li>Nature Nanotechnology</li>
-                        <li>Nature Cell Biology</li>
-                    </ul>
-                </div>
-                
-                <div class="journal-card">
-                    <h3>Science Family</h3>
-                    <ul>
-                        <li>Science</li>
-                    </ul>
-                </div>
-                
-                <div class="journal-card">
-                    <h3>Cell Press</h3>
-                    <ul>
-                        <li>Cell</li>
-                        <li>Cell Stem Cell</li>
-                        <li>Cell Reports</li>
-                    </ul>
-                </div>
-                
-                <div class="journal-card">
-                    <h3>Other Major Journals</h3>
-                    <ul>
-                        <li>The Lancet</li>
-                        <li>Journal of Clinical Investigation</li>
-                        <li>PLOS Biology</li>
-                        <li>PLOS Medicine</li>
-                        <li>PLOS Computational Biology</li>
-                    </ul>
-                </div>
-            </div>
-        </section>
-        
-        <section class="digests-section">
-            <h2>Latest Digests</h2>
-            <ul class="digest-list" id="digest-list">
-                <!-- This will be populated by JavaScript -->
-            </ul>
-        </section>
-    </main>
-    
-    <script>
-        // Function to fetch and display digests
-        async function loadDigests() {
-            try {
-                const response = await fetch('digests/');
-                const text = await response.text();
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(text, 'text/html');
-                const links = doc.querySelectorAll('a');
-                
-                const digestList = document.getElementById('digest-list');
-                digestList.innerHTML = '';
-                
-                links.forEach(link => {
-                    if (link.href.endsWith('.html')) {
-                        const li = document.createElement('li');
-                        const a = document.createElement('a');
-                        a.href = link.href;
-                        a.textContent = link.textContent;
-                        li.appendChild(a);
-                        digestList.appendChild(li);
-                    }
-                });
-            } catch (error) {
-                console.error('Error loading digests:', error);
-            }
-        }
-        
-        // Load digests when the page loads
-        window.addEventListener('load', loadDigests);
+<header>
+<div class="container">
+<h1>PaperRSS</h1>
+<p class="subtitle">Stay updated with the latest scientific research</p>
+</div>
+</header>
+<main class="container">
+<section>
+<h2>Tracked Journals</h2>
+<div class="journals-grid">
+<div class="journal-card">
+<h3>Nature Family</h3>
+<ul>
+<li>Nature Reviews Drug Discovery</li>
+<li>Nature Reviews Cancer</li>
+<li>Nature Biomedical Engineering</li>
+<li>Nature Biotechnology</li>
+<li>Nature Genetics</li>
+<li>Nature</li>
+<li>Nature Medicine</li>
+<li>Nature Neuroscience</li>
+<li>Nature Nanotechnology</li>
+<li>Nature Cell Biology</li>
+</ul>
+</div>
+<div class="journal-card">
+<h3>Science Family</h3>
+<ul>
+<li>Science</li>
+</ul>
+</div>
+<div class="journal-card">
+<h3>Cell Press</h3>
+<ul>
+<li>Cell</li>
+<li>Cell Stem Cell</li>
+<li>Cell Reports</li>
+</ul>
+</div>
+<div class="journal-card">
+<h3>Other Major Journals</h3>
+<ul>
+<li>The Lancet</li>
+<li>Journal of Clinical Investigation</li>
+<li>PLOS Biology</li>
+<li>PLOS Medicine</li>
+<li>PLOS Computational Biology</li>
+</ul>
+</div>
+</div>
+</section>
+<section class="digests-section">
+<h2>Latest Digests</h2>
+<ul class="digest-list"><li><a href="digests/2025-05-04.html">May 04, 2025 Digest</a></li><li><a href="digests/2025-05-03.html">May 03, 2025 Digest</a></li></ul>
+</section>
+</main>
+<script>
+        // No longer needed - removed JavaScript digest loading
     </script>
 </body>
 </html> 
