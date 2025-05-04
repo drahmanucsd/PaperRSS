@@ -32,14 +32,13 @@ def test_summarize_papers_single_batch(mock_openai):
         )
     ]
     
-    # Mock OpenAI response
-    mock_response = MagicMock()
-    mock_response.choices = [
-        MagicMock(message=MagicMock(content="Summary 1")),
-        MagicMock(message=MagicMock(content="Summary 2"))
+    # Mock OpenAI responses for each paper
+    mock_responses = [
+        MagicMock(choices=[MagicMock(message=MagicMock(content="Summary 1"))]),
+        MagicMock(choices=[MagicMock(message=MagicMock(content="Summary 2"))])
     ]
     mock_client = MagicMock()
-    mock_client.chat.completions.create.return_value = mock_response
+    mock_client.chat.completions.create.side_effect = mock_responses
     mock_openai.return_value = mock_client
     
     # Test summarization
@@ -48,7 +47,7 @@ def test_summarize_papers_single_batch(mock_openai):
     assert len(result) == 2
     assert result[0].summary == "Summary 1"
     assert result[1].summary == "Summary 2"
-    assert mock_client.chat.completions.create.call_count == 1
+    assert mock_client.chat.completions.create.call_count == 2
 
 @patch('app.summarizer.OpenAI')
 def test_summarize_papers_multiple_batches(mock_openai):
@@ -65,10 +64,10 @@ def test_summarize_papers_multiple_batches(mock_openai):
         ) for i in range(7)  # 7 papers to test multiple batches
     ]
     
-    # Mock OpenAI responses for two batches
+    # Mock OpenAI responses for each paper
     mock_responses = [
-        MagicMock(choices=[MagicMock(message=MagicMock(content=f"Summary {i}")) for i in range(5)]),
-        MagicMock(choices=[MagicMock(message=MagicMock(content=f"Summary {i}")) for i in range(5, 7)])
+        MagicMock(choices=[MagicMock(message=MagicMock(content=f"Summary {i}"))]) 
+        for i in range(7)
     ]
     mock_client = MagicMock()
     mock_client.chat.completions.create.side_effect = mock_responses
@@ -80,7 +79,7 @@ def test_summarize_papers_multiple_batches(mock_openai):
     assert len(result) == 7
     for i, paper in enumerate(result):
         assert paper.summary == f"Summary {i}"
-    assert mock_client.chat.completions.create.call_count == 2
+    assert mock_client.chat.completions.create.call_count == 7
 
 @patch('app.summarizer.OpenAI')
 def test_summarize_papers_api_error(mock_openai):
@@ -129,14 +128,13 @@ def test_summarize_papers_partial_failure(mock_openai):
         )
     ]
     
-    # Mock OpenAI response for first paper
-    mock_response = MagicMock()
-    mock_response.choices = [
-        MagicMock(message=MagicMock(content="Summary 1")),
-        MagicMock(message=MagicMock(content="Summary 2"))
+    # Mock OpenAI response for first paper and error for second
+    mock_responses = [
+        MagicMock(choices=[MagicMock(message=MagicMock(content="Summary 1"))]),
+        Exception("API Error")
     ]
     mock_client = MagicMock()
-    mock_client.chat.completions.create.side_effect = [mock_response, Exception("API Error")]
+    mock_client.chat.completions.create.side_effect = mock_responses
     mock_openai.return_value = mock_client
     
     # Test summarization
@@ -144,4 +142,4 @@ def test_summarize_papers_partial_failure(mock_openai):
     
     assert len(result) == 2
     assert result[0].summary == "Summary 1"
-    assert result[1].summary == "Summary 2" 
+    assert result[1].summary == "Summary generation failed." 

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PaperRSS - Scientific Journal Digests</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --background-color: #f8f9fa;
+            --text-color: #2c3e50;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+        }
+        
+        h1 {
+            margin: 0;
+            font-size: 2.5rem;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-top: 0.5rem;
+        }
+        
+        .journals-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        
+        .journal-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        
+        .journal-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .journal-card h3 {
+            margin: 0 0 1rem 0;
+            color: var(--primary-color);
+        }
+        
+        .digests-section {
+            margin-top: 3rem;
+        }
+        
+        .digest-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .digest-list li {
+            margin-bottom: 0.5rem;
+        }
+        
+        .digest-list a {
+            color: var(--secondary-color);
+            text-decoration: none;
+        }
+        
+        .digest-list a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>PaperRSS</h1>
+            <p class="subtitle">Stay updated with the latest scientific research</p>
+        </div>
+    </header>
+    
+    <main class="container">
+        <section>
+            <h2>Tracked Journals</h2>
+            <div class="journals-grid">
+                <div class="journal-card">
+                    <h3>Nature Family</h3>
+                    <ul>
+                        <li>Nature Reviews Drug Discovery</li>
+                        <li>Nature Reviews Cancer</li>
+                        <li>Nature Biomedical Engineering</li>
+                        <li>Nature Biotechnology</li>
+                        <li>Nature Genetics</li>
+                        <li>Nature</li>
+                        <li>Nature Medicine</li>
+                        <li>Nature Neuroscience</li>
+                        <li>Nature Nanotechnology</li>
+                        <li>Nature Cell Biology</li>
+                    </ul>
+                </div>
+                
+                <div class="journal-card">
+                    <h3>Science Family</h3>
+                    <ul>
+                        <li>Science</li>
+                    </ul>
+                </div>
+                
+                <div class="journal-card">
+                    <h3>Cell Press</h3>
+                    <ul>
+                        <li>Cell</li>
+                        <li>Cell Stem Cell</li>
+                        <li>Cell Reports</li>
+                    </ul>
+                </div>
+                
+                <div class="journal-card">
+                    <h3>Other Major Journals</h3>
+                    <ul>
+                        <li>The Lancet</li>
+                        <li>Journal of Clinical Investigation</li>
+                        <li>PLOS Biology</li>
+                        <li>PLOS Medicine</li>
+                        <li>PLOS Computational Biology</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+        
+        <section class="digests-section">
+            <h2>Latest Digests</h2>
+            <ul class="digest-list" id="digest-list">
+                <!-- This will be populated by JavaScript -->
+            </ul>
+        </section>
+    </main>
+    
+    <script>
+        // Function to fetch and display digests
+        async function loadDigests() {
+            try {
+                const response = await fetch('digests/');
+                const text = await response.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(text, 'text/html');
+                const links = doc.querySelectorAll('a');
+                
+                const digestList = document.getElementById('digest-list');
+                digestList.innerHTML = '';
+                
+                links.forEach(link => {
+                    if (link.href.endsWith('.html')) {
+                        const li = document.createElement('li');
+                        const a = document.createElement('a');
+                        a.href = link.href;
+                        a.textContent = link.textContent;
+                        li.appendChild(a);
+                        digestList.appendChild(li);
+                    }
+                });
+            } catch (error) {
+                console.error('Error loading digests:', error);
+            }
+        }
+        
+        // Load digests when the page loads
+        window.addEventListener('load', loadDigests);
+    </script>
+</body>
+</html> 
