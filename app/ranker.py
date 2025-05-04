@@ -61,7 +61,7 @@ def rank_papers(papers: List[Paper]) -> List[Paper]:
                 "Here are the user's research interests and their weights (1-10, higher is more important):\n"
                 f"{preferences}\n\n"
                 "Please rank the following papers by how well they match these interests, "
-                "considering both the weights and the content. Return only the numbers in order of relevance:\n\n"
+                "considering both the weights and the content. A paper should also be evaluated on its impact on the field. The user is a scientist in the field of biotechnology. Return only the numbers in order of relevance:\n\n"
                 f"{''.join(paper_info)}"
             )
 
@@ -72,7 +72,8 @@ def rank_papers(papers: List[Paper]) -> List[Paper]:
             messages=[
                 {"role": "system", "content": "You are a scientific paper ranker. Return only the numbers in order of relevance."},
                 {"role": "user", "content": prompt}
-            ]
+            ],
+            temperature=0.5
         )
 
         # Parse rankings from response
